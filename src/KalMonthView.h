@@ -10,11 +10,12 @@
 @interface KalMonthView : UIView
 {
   NSUInteger numWeeks;
+  CGSize kTileSize;
 }
 
 @property (nonatomic) NSUInteger numWeeks;
 
-- (id)initWithFrame:(CGRect)rect; // designated initializer
+- (id)initWithFrame:(CGRect)rect withTileSize:(CGSize) kTileSize; // designated initializer
 - (void)showDates:(NSArray *)mainDates leadingAdjacentDates:(NSArray *)leadingAdjacentDates trailingAdjacentDates:(NSArray *)trailingAdjacentDates;
 - (KalTileView *)firstTileOfMonth;
 - (KalTileView *)tileForDate:(KalDate *)date;

@@ -18,6 +18,7 @@ typedef char KalTileType;
 {
   KalDate *date;
   CGPoint origin;
+		CGSize kTileSize;
   struct {
     unsigned int selected : 1;
     unsigned int highlighted : 1;
@@ -35,5 +36,6 @@ typedef char KalTileType;
 - (void)resetState;
 - (BOOL)isToday;
 - (BOOL)belongsToAdjacentMonth;
+- (id)initWithFrame:(CGRect)frame withTileSize:(CGSize) kTileSize;
 
 @end

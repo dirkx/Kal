@@ -17,7 +17,6 @@
 #define SLIDE_UP 1
 #define SLIDE_DOWN 2
 
-const CGSize kTileSize = { 46.f, 44.f };
 
 static NSString *kSlideAnimationId = @"KalSwitchMonths";
 
@@ -31,7 +30,8 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
 
 @synthesize selectedTile, highlightedTile, transitioning;
 
-- (id)initWithFrame:(CGRect)frame logic:(KalLogic *)theLogic delegate:(id<KalViewDelegate>)theDelegate
+
+- (id)initWithFrame:(CGRect)frame logic:(KalLogic *)theLogic delegate:(id<KalViewDelegate>)theDelegate withTileSize:(CGSize) _kTileSize
 {
   // MobileCal uses 46px wide tiles, with a 2px inner stroke 
   // along the top and right edges. Since there are 7 columns,
@@ -41,16 +41,17 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
   // to accomodate all 7 columns. The 7th day's 2px inner stroke
   // will be clipped off the screen, but that's fine because
   // MobileCal does the same thing.
-  frame.size.width = 7 * kTileSize.width;
+	
+  kTileSize = _kTileSize;
   
   if (self = [super initWithFrame:frame]) {
     self.clipsToBounds = YES;
     logic = [theLogic retain];
     delegate = theDelegate;
     
-    CGRect monthRect = CGRectMake(0.f, 0.f, frame.size.width, frame.size.height);
-    frontMonthView = [[KalMonthView alloc] initWithFrame:monthRect];
-    backMonthView = [[KalMonthView alloc] initWithFrame:monthRect];
+    CGRect monthRect = CGRectMake(0.f, 0.f, kTileSize.width * 7, frame.size.height);
+	  frontMonthView = [[KalMonthView alloc] initWithFrame:monthRect withTileSize:kTileSize];
+	  backMonthView = [[KalMonthView alloc] initWithFrame:monthRect withTileSize:kTileSize];
     backMonthView.hidden = YES;
     [self addSubview:backMonthView];
     [self addSubview:frontMonthView];
@@ -66,7 +67,7 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
   [[UIColor colorWithRed:0.63f green:0.65f blue:0.68f alpha:1.f] setFill];
   CGRect line;
   line.origin = CGPointMake(0.f, self.height - 1.f);
-  line.size = CGSizeMake(self.width, 1.f);
+  line.size = CGSizeMake(self.width, 30.f);
   CGContextFillRect(UIGraphicsGetCurrentContext(), line);
 }
 
@@ -87,6 +88,16 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
     [tile setNeedsDisplay];
   }
 }
+
+#if 0
+- (KalTileView *) highlightedTile {
+	return [highlightedTile autorelease];
+}
+
+- (KalTileView *) selectedTile {
+	return [selectedTile autorelease];
+}
+#endif
 
 - (void)setSelectedTile:(KalTileView *)tile
 {
@@ -109,7 +120,10 @@ static NSString *kSlideAnimationId = @"KalSwitchMonths";
   
   if ([hitView isKindOfClass:[KalTileView class]]) {
     KalTileView *tile = (KalTileView*)hitView;
-    if (tile.belongsToAdjacentMonth) {
+		if ([self.selectedTile isEqual:tile]) {
+			// ignore ? reminder ?
+		}
+		else if (tile.belongsToAdjacentMonth) {
       self.highlightedTile = tile;
     } else {
       self.highlightedTile = nil;

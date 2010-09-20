@@ -38,8 +38,9 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 
 @synthesize dataSource, delegate;
 
-- (id)initWithSelectedDate:(NSDate *)selectedDate
+- (id)initWithSelectedDate:(NSDate *)selectedDate withFrame:(CGRect )_frame
 {
+	frame = _frame;
   if ((self = [super init])) {
     logic = [[KalLogic alloc] initForDate:selectedDate];
     initialSelectedDate = [selectedDate retain];
@@ -49,10 +50,21 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
   return self;
 }
 
+- (id)initWithSelectedDate:(NSDate *)selectedDate
+{
+	return [self initWithSelectedDate:selectedDate withFrame:[[UIScreen mainScreen] applicationFrame]];
+}
+
+- (id)initWithFrame:(CGRect )_frame
+{
+	return [self initWithSelectedDate:[NSDate date] withFrame:_frame];
+}
+
 - (id)init
 {
-  return [self initWithSelectedDate:[NSDate date]];
+	return [self initWithSelectedDate:[NSDate date] withFrame:[[UIScreen mainScreen] applicationFrame]];
 }
+
 
 - (KalView*)calendarView { return (KalView*)self.view; }
 
@@ -167,18 +179,23 @@ NSString *const KalDataSourceChangedNotification = @"KalDataSourceChangedNotific
 // -----------------------------------------------------------------------------------
 #pragma mark UIViewController
 
+
+
 - (void)loadView
 {
-  self.title = @"Calendar";
   
-  KalView *kalView = [[KalView alloc] initWithFrame:[[UIScreen mainScreen] applicationFrame] delegate:self logic:logic];
+  KalView *kalView = [[KalView alloc] initWithFrame:frame  delegate:self logic:logic withTable:YES];
   self.view = kalView;
+	
+  self.title = NSLocalizedString(@"Calendar",@"Title in Controller top bar");
+
   tableView = kalView.tableView;
   tableView.dataSource = dataSource;
   tableView.delegate = delegate;
   [tableView retain];
   [kalView selectDate:[KalDate dateFromNSDate:initialSelectedDate]];
   [kalView release];
+
   [self reloadData];
 }
 

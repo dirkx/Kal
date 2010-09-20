@@ -45,13 +45,22 @@
   UIImageView *shadowView;
   id<KalViewDelegate> delegate;
   KalLogic *logic;
+  CGFloat kHeaderHeight;
+  CGFloat kMonthLabelHeight;
+  CGFloat kChangeMonthButtonWidth;
+  CGFloat kChangeMonthButtonHeight;
+  CGFloat kMonthLabelWidth;
+  CGFloat kHeaderVerticalAdjust;
+  CGFloat kWeekWidth;	
+  CGSize kTileSize;
+	BOOL hasTable;
 }
 
 @property (nonatomic, assign) id<KalViewDelegate> delegate;
 @property (nonatomic, readonly) UITableView *tableView;
 @property (nonatomic, readonly) KalDate *selectedDate;
 
-- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate logic:(KalLogic *)logic;
+- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)delegate logic:(KalLogic *)logic withTable:(BOOL)hasTable;
 - (BOOL)isSliding;
 - (void)selectDate:(KalDate *)date;
 - (void)markTilesForDates:(NSArray *)dates;
@@ -65,14 +74,16 @@
 
 @end
 
-#pragma mark -
 
-@class KalDate;
-
-@protocol KalViewDelegate
+@protocol KalViewDelegate <NSObject>
 
 - (void)showPreviousMonth;
 - (void)showFollowingMonth;
 - (void)didSelectDate:(KalDate *)date;
 
 @end
+
+#pragma mark -
+
+@class KalDate;
+

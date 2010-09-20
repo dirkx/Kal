@@ -14,28 +14,57 @@
 - (void)setHeaderTitleText:(NSString *)text;
 @end
 
-static const CGFloat kHeaderHeight = 44.f;
-static const CGFloat kMonthLabelHeight = 17.f;
+static const CGFloat kHeaderHeightMin = 44.f;
+static const CGFloat kMonthLabelHeightMin = 17.f;
+static const CGFloat kChangeMonthButtonHeightMin = 30.0f;
+
+static const CGFloat kTileSizeHeightMin = 40.f;
+static const CGFloat kHeaderVerticalAdjustMin = 3.f;
+
+static const CGFloat kChangeMonthButtonWidthMin = 46.0f;
+static const CGFloat kWeekWidthMin = 46.f;
+static const CGFloat kMonthLabelWidthMin = 200.0f;
 
 @implementation KalView
 
 @synthesize delegate, tableView;
 
-- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)theDelegate logic:(KalLogic *)theLogic
+- (id)initWithFrame:(CGRect)frame delegate:(id<KalViewDelegate>)theDelegate logic:(KalLogic *)theLogic withTable:(BOOL)_hasTable
 {
   if ((self = [super initWithFrame:frame])) {
+	  kHeaderHeight = kHeaderHeightMin;
+	  kMonthLabelHeight = kMonthLabelHeightMin;
+	  kChangeMonthButtonWidth = kChangeMonthButtonWidthMin;
+	  kChangeMonthButtonHeight = kChangeMonthButtonHeightMin;
+	  kMonthLabelWidth = kMonthLabelWidthMin;
+	  kHeaderVerticalAdjust =kHeaderVerticalAdjustMin;
+	  kWeekWidth = kWeekWidthMin;
+	  kTileSize.height = kTileSizeHeightMin; 
+
+	  // Rightsize us to something normalish; and then recenter.
+	  //
+	  if (frame.size.width / 7.f > kWeekWidth) {
+		  kWeekWidth = floor(frame.size.width/7.f);
+	  };
+	  int w = floor(7.f * kWeekWidth);;
+	  CGFloat offX = (self.frame.size.width - w) / 2.0;
+	  self.width = w;
+	  
+	  kTileSize.width = kWeekWidth;
+	  hasTable = _hasTable;
+
     delegate = theDelegate;
     logic = [theLogic retain];
     [logic addObserver:self forKeyPath:@"selectedMonthNameAndYear" options:NSKeyValueObservingOptionNew context:NULL];
     self.autoresizesSubviews = YES;
     self.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     
-    UIView *headerView = [[[UIView alloc] initWithFrame:CGRectMake(0.f, 0.f, frame.size.width, kHeaderHeight)] autorelease];
+    UIView *headerView = [[[UIView alloc] initWithFrame:CGRectMake(offX, 0.f, 7.f * kWeekWidth, kHeaderHeight)] autorelease];
     headerView.backgroundColor = [UIColor grayColor];
     [self addSubviewsToHeaderView:headerView];
     [self addSubview:headerView];
     
-    UIView *contentView = [[[UIView alloc] initWithFrame:CGRectMake(0.f, kHeaderHeight, frame.size.width, frame.size.height - kHeaderHeight)] autorelease];
+    UIView *contentView = [[[UIView alloc] initWithFrame:CGRectMake(offX, kHeaderHeight, frame.size.width, frame.size.height - kHeaderHeight)] autorelease];
     contentView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     [self addSubviewsToContentView:contentView];
     [self addSubview:contentView];
@@ -55,6 +84,8 @@ static const CGFloat kMonthLabelHeight = 17.f;
 - (void)slideDown { [gridView slideDown]; }
 - (void)slideUp { [gridView slideUp]; }
 
+#pragma mark delegate Informing
+
 - (void)showPreviousMonth
 {
   if (!gridView.transitioning)
@@ -69,16 +100,20 @@ static const CGFloat kMonthLabelHeight = 17.f;
 
 - (void)addSubviewsToHeaderView:(UIView *)headerView
 {
-  const CGFloat kChangeMonthButtonWidth = 46.0f;
-  const CGFloat kChangeMonthButtonHeight = 30.0f;
-  const CGFloat kMonthLabelWidth = 200.0f;
-  const CGFloat kHeaderVerticalAdjust = 3.f;
   
   // Header background gradient
   UIImageView *backgroundView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Kal.bundle/kal_grid_background.png"]];
   CGRect imageFrame = headerView.frame;
   imageFrame.origin = CGPointZero;
   backgroundView.frame = imageFrame;
+	
+	// Make sure the header is the same size as the remainder of our sundry; i.e. fits in the
+	// normal calendar view area.
+	//
+	CGRect f = backgroundView.frame;
+	if (f.size.width > self.frame.size.width) f.size.width = self.frame.size.width;
+	backgroundView.frame = f;
+	
   [headerView addSubview:backgroundView];
   [backgroundView release];
   
@@ -127,8 +162,9 @@ static const CGFloat kMonthLabelHeight = 17.f;
   NSArray *weekdayNames = [[[[NSDateFormatter alloc] init] autorelease] shortWeekdaySymbols];
   NSUInteger firstWeekday = [[NSCalendar currentCalendar] firstWeekday];
   NSUInteger i = firstWeekday - 1;
-  for (CGFloat xOffset = 0.f; xOffset < headerView.width; xOffset += 46.f, i = (i+1)%7) {
-    CGRect weekdayFrame = CGRectMake(xOffset, 30.f, 46.f, kHeaderHeight - 29.f);
+	
+  for (CGFloat xOffset = 0.f; (xOffset < headerView.width) && (i < 7); xOffset += kWeekWidth, i++) {
+    CGRect weekdayFrame = CGRectMake(xOffset, 30.f, kWeekWidth, kHeaderHeight - 29.f);
     UILabel *weekdayLabel = [[UILabel alloc] initWithFrame:weekdayFrame];
     weekdayLabel.backgroundColor = [UIColor clearColor];
     weekdayLabel.font = [UIFont boldSystemFontOfSize:10.f];
@@ -150,14 +186,16 @@ static const CGFloat kMonthLabelHeight = 17.f;
   CGRect fullWidthAutomaticLayoutFrame = CGRectMake(0.f, 0.f, self.width, 0.f);
 
   // The tile grid (the calendar body)
-  gridView = [[KalGridView alloc] initWithFrame:fullWidthAutomaticLayoutFrame logic:logic delegate:delegate];
+	gridView = [[KalGridView alloc] initWithFrame:fullWidthAutomaticLayoutFrame logic:logic delegate:delegate withTileSize:kTileSize];
   [gridView addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:NULL];
   [contentView addSubview:gridView];
 
+	if (hasTable) {
   // The list of events for the selected day
   tableView = [[UITableView alloc] initWithFrame:fullWidthAutomaticLayoutFrame style:UITableViewStylePlain];
   tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   [contentView addSubview:tableView];
+	}
   
   // Drop shadow below tile grid and over the list of events for the selected day
   shadowView = [[UIImageView alloc] initWithFrame:fullWidthAutomaticLayoutFrame];
@@ -171,6 +209,7 @@ static const CGFloat kMonthLabelHeight = 17.f;
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
+	
   if (object == gridView && [keyPath isEqualToString:@"frame"]) {
     
     /* Animate tableView filling the remaining space after the

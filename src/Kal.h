@@ -35,7 +35,9 @@
  */
 
 #import "KalViewController.h"
+#import "KalPlainViewController.h"
 #import "KalDataSource.h"
+#import "KalDate.h"
 
 // The KalDataSource implementation should post this notification
 // whenever its content has changed. Kal uses this notification to

@@ -10,21 +10,21 @@
 #import "KalDate.h"
 #import "KalPrivate.h"
 
-extern const CGSize kTileSize;
-
 @implementation KalMonthView
 
 @synthesize numWeeks;
 
-- (id)initWithFrame:(CGRect)frame
+- (id)initWithFrame:(CGRect)frame withTileSize:(CGSize) _kTileSize
 {
   if ((self = [super initWithFrame:frame])) {
+	  kTileSize = _kTileSize;
     self.opaque = NO;
     self.clipsToBounds = YES;
+	  
     for (int i=0; i<6; i++) {
       for (int j=0; j<7; j++) {
         CGRect r = CGRectMake(j*kTileSize.width, i*kTileSize.height, kTileSize.width, kTileSize.height);
-        [self addSubview:[[[KalTileView alloc] initWithFrame:r] autorelease]];
+		  [self addSubview:[[[KalTileView alloc] initWithFrame:r withTileSize:kTileSize] autorelease]];
       }
     }
   }
