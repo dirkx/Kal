@@ -1,6 +1,7 @@
 src/build/
 Examples/Holiday/build/
 Examples/NativeCal/build/
+Examples/InPlainView/build/
 .svn
 Examples/.svn
 Examples/Holiday/.svn
